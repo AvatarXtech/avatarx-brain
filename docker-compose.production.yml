@@ -1,0 +1,93 @@
+x-production-service: &production-service
+  init: true
+  restart: always
+  security_opt:
+    - no-new-privileges:true
+  pids_limit: 256
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: "5"
+  environment:
+    NODE_ENV: production
+    SERVICE_AUTH_SECRET: ${SERVICE_AUTH_SECRET:?SERVICE_AUTH_SECRET is required}
+    HTTP_REQUEST_TIMEOUT_MS: ${HTTP_REQUEST_TIMEOUT_MS:-30000}
+    GRACEFUL_SHUTDOWN_MS: ${GRACEFUL_SHUTDOWN_MS:-10000}
+
+services:
+  agents:
+    <<: *production-service
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4101/health').then(r=>{if(!r.ok)process.exit(1)})"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+  analytics:
+    <<: *production-service
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4102/health').then(r=>{if(!r.ok)process.exit(1)})"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+  intelligence:
+    <<: *production-service
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4103/health').then(r=>{if(!r.ok)process.exit(1)})"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+  knowledge:
+    <<: *production-service
+    environment:
+      NODE_ENV: production
+      SERVICE_AUTH_SECRET: ${SERVICE_AUTH_SECRET:?SERVICE_AUTH_SECRET is required}
+      PROVENANCE_SIGNING_SECRET: ${PROVENANCE_SIGNING_SECRET:?PROVENANCE_SIGNING_SECRET is required}
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4104/health').then(r=>{if(!r.ok)process.exit(1)})"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+  memory:
+    <<: *production-service
+    environment:
+      NODE_ENV: production
+      SERVICE_AUTH_SECRET: ${SERVICE_AUTH_SECRET:?SERVICE_AUTH_SECRET is required}
+      MEMORY_ENCRYPTION_KEY: ${MEMORY_ENCRYPTION_KEY:?MEMORY_ENCRYPTION_KEY is required}
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4105/health').then(r=>{if(!r.ok)process.exit(1)})"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+  neuron:
+    <<: *production-service
+    environment:
+      NODE_ENV: production
+      SERVICE_AUTH_SECRET: ${SERVICE_AUTH_SECRET:?SERVICE_AUTH_SECRET is required}
+      TOOL_CAPABILITY_SECRET: ${TOOL_CAPABILITY_SECRET:?TOOL_CAPABILITY_SECRET is required}
+      AI_PROVIDER: ${AI_PROVIDER:-mock}
+      AI_API_KEY: ${AI_API_KEY:-}
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4106/health').then(r=>{if(!r.ok)process.exit(1)})"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+  brain:
+    <<: *production-service
+    environment:
+      NODE_ENV: production
+      SERVICE_AUTH_SECRET: ${SERVICE_AUTH_SECRET:?SERVICE_AUTH_SECRET is required}
+      AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required}
+      AGENTS_URL: http://agents:4101
+      ANALYTICS_URL: http://analytics:4102
+      INTELLIGENCE_URL: http://intelligence:4103
+      KNOWLEDGE_URL: http://knowledge:4104
+      MEMORY_URL: http://memory:4105
+      NEURON_URL: http://neuron:4106
+    depends_on:
+      agents: { condition: service_healthy }
+      analytics: { condition: service_healthy }
+      intelligence: { condition: service_healthy }
+      knowledge: { condition: service_healthy }
+      memory: { condition: service_healthy }
+      neuron: { condition: service_healthy }

@@ -1,8 +1,10 @@
-# Avatar X Brain — Phase 7
+# Avatar X Brain — Phase 8
 
 The federated cognitive-mesh control plane for the Avatar X AI ecosystem. It orchestrates six local services while enabling signed, consent-bound collaboration with independently deployed peers through portable evidence, reasoning, inference, and trace envelopes.
 
 Phase 7 adds cryptographic node identities, peer capability negotiation, remote task delegation, selective memory disclosure, federated evidence exchange, trust-weighted quorum, signed inference envelopes, and portable trace stitching. Earlier trust and verification controls remain mandatory at every federation boundary.
+
+Phase 8 is the production-readiness layer. Every backend now validates strong secrets before serving production traffic, applies bounded HTTP timeouts, emits structured lifecycle events, and drains gracefully. The production Compose overlay adds health-gated startup, process and logging limits, and no-new-privileges hardening. Brain also includes an offline configuration gate and CI build checks.
 
 ## Run the ecosystem
 
@@ -18,6 +20,15 @@ npm run dev:ecosystem
 Open `http://localhost:3000`. All backend services are dependency-free Node.js applications. The console has a safe local fallback when one is unavailable.
 
 For the containerized stack, copy `.env.compose.example` to `.env`, replace the secrets, then run `docker compose up --build`. Persistent knowledge, memory, and analytics volumes are included.
+
+Validate production secrets and start the hardened overlay with:
+
+```bash
+npm run validate:production
+docker compose -f docker-compose.yml -f docker-compose.production.yml up --build
+```
+
+Create an atomic, SHA-256-manifested backup of the durable Agents, Analytics, Knowledge, and Memory state with `npm run backup:state`. Override individual source paths or `BACKUP_OUTPUT` for mounted production volumes.
 
 ## Verify
 

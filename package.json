@@ -4,6 +4,9 @@
   "packageManager": "pnpm@10",
   "scripts": {
     "dev:ecosystem": "node scripts/start-ecosystem.mjs",
-    "test:ecosystem": "node scripts/verify-ecosystem.mjs"
+    "test:ecosystem": "node scripts/verify-ecosystem.mjs",
+    "test:production": "node --test scripts/*.test.mjs",
+    "validate:production": "node scripts/validate-production.mjs",
+    "backup:state": "node scripts/backup-state.mjs"
   }
 }
