@@ -24,4 +24,10 @@ jobs:
         working-directory: apps/website
       - run: npm run build
         working-directory: apps/website
-      - run: docker compose -f docker-compose.yml config --quiet
+      - run: docker compose -f docker-compose.yml -f docker-compose.production.yml config --quiet
+        env:
+          SERVICE_AUTH_SECRET: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          AUTH_SECRET: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+          PROVENANCE_SIGNING_SECRET: cccccccccccccccccccccccccccccccc
+          MEMORY_ENCRYPTION_KEY: BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=
+          TOOL_CAPABILITY_SECRET: dddddddddddddddddddddddddddddddd
