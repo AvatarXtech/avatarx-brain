@@ -1,0 +1,112 @@
+name: avatarx-ai
+
+x-service: &service
+  restart: unless-stopped
+  environment:
+    SERVICE_AUTH_SECRET: ${SERVICE_AUTH_SECRET:-phase2-local-service-secret}
+  networks: [avatarx-ai]
+
+services:
+  agents:
+    <<: *service
+    build: ../avatarx-agents
+    environment:
+      SERVICE_AUTH_SECRET: ${SERVICE_AUTH_SECRET:-phase2-local-service-secret}
+      PORT: 4101
+      AGENT_REGISTRY_FILE: /data/registry.json
+      AUTONOMOUS_MAX_CYCLES: ${AUTONOMOUS_MAX_CYCLES:-10}
+      AUTONOMOUS_APPROVAL_RISKS: ${AUTONOMOUS_APPROVAL_RISKS:-medium,high,critical}
+    volumes: [agents-data:/data]
+    ports: ["4101:4101"]
+  analytics:
+    <<: *service
+    build: ../avatarx-analytics
+    environment:
+      SERVICE_AUTH_SECRET: ${SERVICE_AUTH_SECRET:-phase2-local-service-secret}
+      PORT: 4102
+      ANALYTICS_DATA_PATH: /data/events.jsonl
+      ANALYTICS_RELEASE_MIN_SCORE: ${ANALYTICS_RELEASE_MIN_SCORE:-0.8}
+      ANALYTICS_REGRESSION_TOLERANCE: ${ANALYTICS_REGRESSION_TOLERANCE:-0.02}
+      FEDERATION_NODE_ID: ${ANALYTICS_NODE_ID:-avatarx-analytics-local}
+      FEDERATION_SHARED_SECRET: ${FEDERATION_SHARED_SECRET:-}
+    volumes: [analytics-data:/data]
+    ports: ["4102:4102"]
+  intelligence:
+    <<: *service
+    build: ../avatarx-intelligence
+    environment:
+      SERVICE_AUTH_SECRET: ${SERVICE_AUTH_SECRET:-phase2-local-service-secret}
+      PORT: 4103
+      MINIMUM_DECISION_CONFIDENCE: ${MINIMUM_DECISION_CONFIDENCE:-0.7}
+      FEDERATION_NODE_ID: ${INTELLIGENCE_NODE_ID:-avatarx-intelligence-local}
+      FEDERATION_SIGNING_SECRET: ${FEDERATION_SIGNING_SECRET:-}
+    ports: ["4103:4103"]
+  knowledge:
+    <<: *service
+    build: ../avatarx-knowledge
+    environment:
+      SERVICE_AUTH_SECRET: ${SERVICE_AUTH_SECRET:-phase2-local-service-secret}
+      PORT: 4104
+      KNOWLEDGE_STORE_PATH: /data/documents.json
+      ACL_ENFORCEMENT: ${ACL_ENFORCEMENT:-false}
+      PROVENANCE_SIGNING_SECRET: ${PROVENANCE_SIGNING_SECRET:-}
+      FEDERATION_NODE_ID: ${KNOWLEDGE_NODE_ID:-avatarx-knowledge-local}
+      FEDERATION_SIGNING_SECRET: ${FEDERATION_SIGNING_SECRET:-}
+    volumes: [knowledge-data:/data]
+    ports: ["4104:4104"]
+  memory:
+    <<: *service
+    build: ../avatarx-memory
+    environment:
+      SERVICE_AUTH_SECRET: ${SERVICE_AUTH_SECRET:-phase2-local-service-secret}
+      PORT: 4105
+      MEMORY_FILE: /data/memories.json
+      MEMORY_ENCRYPTION_KEY: ${MEMORY_ENCRYPTION_KEY:-}
+      MEMORY_ENCRYPTION_KEY_ID: ${MEMORY_ENCRYPTION_KEY_ID:-primary}
+    volumes: [memory-data:/data]
+    ports: ["4105:4105"]
+  neuron:
+    <<: *service
+    build: ../avatarx-neuron
+    environment:
+      SERVICE_AUTH_SECRET: ${SERVICE_AUTH_SECRET:-phase2-local-service-secret}
+      PORT: 4106
+      AI_PROVIDER: ${AI_PROVIDER:-mock}
+      AI_BASE_URL: ${AI_BASE_URL:-https://api.openai.com/v1}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-gpt-4.1-mini}
+      AI_ENSEMBLE_CANDIDATES: ${AI_ENSEMBLE_CANDIDATES:-3}
+      AI_TENANT_DAILY_BUDGET: ${AI_TENANT_DAILY_BUDGET:-10}
+      AI_SAFETY_MODE: ${AI_SAFETY_MODE:-audit}
+      TOOL_CAPABILITY_SECRET: ${TOOL_CAPABILITY_SECRET:-}
+      AI_DEBATE_SAMPLES: ${AI_DEBATE_SAMPLES:-3}
+      AI_DEBATE_MAX_REPAIRS: ${AI_DEBATE_MAX_REPAIRS:-1}
+      FEDERATION_NODE_ID: ${NEURON_NODE_ID:-avatarx-neuron-local}
+      FEDERATION_SHARED_SECRET: ${FEDERATION_SHARED_SECRET:-}
+      FEDERATION_DEADLINE_MS: ${FEDERATION_DEADLINE_MS:-5000}
+    ports: ["4106:4106"]
+  brain:
+    build: ./apps/website
+    restart: unless-stopped
+    depends_on: [agents, analytics, intelligence, knowledge, memory, neuron]
+    environment:
+      SERVICE_AUTH_SECRET: ${SERVICE_AUTH_SECRET:-phase2-local-service-secret}
+      AUTH_SECRET: ${AUTH_SECRET:-}
+      AGENTS_URL: http://agents:4101
+      ANALYTICS_URL: http://analytics:4102
+      INTELLIGENCE_URL: http://intelligence:4103
+      KNOWLEDGE_URL: http://knowledge:4104
+      MEMORY_URL: http://memory:4105
+      NEURON_URL: http://neuron:4106
+      FEDERATION_SHARED_SECRET: ${FEDERATION_SHARED_SECRET:-}
+    ports: ["3000:3000"]
+    networks: [avatarx-ai]
+
+networks:
+  avatarx-ai:
+
+volumes:
+  agents-data:
+  analytics-data:
+  knowledge-data:
+  memory-data:
