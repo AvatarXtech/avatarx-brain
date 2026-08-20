@@ -9,7 +9,9 @@ const valid = {
   TOOL_CAPABILITY_SECRET: strong + '-tools',
   PROVENANCE_SIGNING_SECRET: strong + '-provenance',
   MEMORY_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString('base64'),
-  AI_PROVIDER: 'mock'
+  AI_PROVIDER: 'mock',
+  REDIS_URL: 'rediss://cache.internal:6379',
+  ...Object.fromEntries(['AGENTS', 'ANALYTICS', 'BRAIN', 'INTELLIGENCE', 'KNOWLEDGE', 'MEMORY', 'NEURON'].map((name) => [`${name}_DATABASE_URL`, `postgresql://${name.toLowerCase()}:password@db.internal/${name.toLowerCase()}`]))
 };
 
 test('accepts a complete production configuration', () => assert.equal(validateProduction(valid).valid, true));

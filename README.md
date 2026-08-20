@@ -1,10 +1,12 @@
-# Avatar X Brain — Phase 8
+# Avatar X Brain — Phase 9
 
 The federated cognitive-mesh control plane for the Avatar X AI ecosystem. It orchestrates six local services while enabling signed, consent-bound collaboration with independently deployed peers through portable evidence, reasoning, inference, and trace envelopes.
 
 Phase 7 adds cryptographic node identities, peer capability negotiation, remote task delegation, selective memory disclosure, federated evidence exchange, trust-weighted quorum, signed inference envelopes, and portable trace stitching. Earlier trust and verification controls remain mandatory at every federation boundary.
 
 Phase 8 is the production-readiness layer. Every backend now validates strong secrets before serving production traffic, applies bounded HTTP timeouts, emits structured lifecycle events, and drains gracefully. The production Compose overlay adds health-gated startup, process and logging limits, and no-new-privileges hardening. Brain also includes an offline configuration gate and CI build checks.
+
+Phase 9 establishes the shared platform/data boundary and a service-owned `brain` PostgreSQL schema for orchestration runs and session bindings. Every AI repository owns its migrations and credential scope; services exchange data only through authenticated APIs or domain events.
 
 ## Run the ecosystem
 

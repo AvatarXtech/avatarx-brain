@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "service": "avatarx-brain",
+  "database": "avatarx_brain",
+  "schema": "brain",
+  "migrationDirectory": "db/migrations",
+  "crossServiceTableAccess": false,
+  "integration": ["service-api", "domain-events"],
+  "credentialScope": "service-only"
+}

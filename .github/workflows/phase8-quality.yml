@@ -31,3 +31,11 @@ jobs:
           PROVENANCE_SIGNING_SECRET: cccccccccccccccccccccccccccccccc
           MEMORY_ENCRYPTION_KEY: BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=
           TOOL_CAPABILITY_SECRET: dddddddddddddddddddddddddddddddd
+          AGENTS_DATABASE_URL: postgresql://agents:password@db/agents
+          ANALYTICS_DATABASE_URL: postgresql://analytics:password@db/analytics
+          BRAIN_DATABASE_URL: postgresql://brain:password@db/brain
+          INTELLIGENCE_DATABASE_URL: postgresql://intelligence:password@db/intelligence
+          KNOWLEDGE_DATABASE_URL: postgresql://knowledge:password@db/knowledge
+          MEMORY_DATABASE_URL: postgresql://memory:password@db/memory
+          NEURON_DATABASE_URL: postgresql://neuron:password@db/neuron
+          REDIS_URL: redis://cache:6379

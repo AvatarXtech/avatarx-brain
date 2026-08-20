@@ -18,6 +18,11 @@ x-production-service: &production-service
 services:
   agents:
     <<: *production-service
+    environment:
+      NODE_ENV: production
+      SERVICE_AUTH_SECRET: ${SERVICE_AUTH_SECRET:?SERVICE_AUTH_SECRET is required}
+      DATABASE_URL: ${AGENTS_DATABASE_URL:?AGENTS_DATABASE_URL is required}
+      REDIS_URL: ${REDIS_URL:?REDIS_URL is required}
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4101/health').then(r=>{if(!r.ok)process.exit(1)})"]
       interval: 15s
@@ -25,6 +30,10 @@ services:
       retries: 5
   analytics:
     <<: *production-service
+    environment:
+      NODE_ENV: production
+      SERVICE_AUTH_SECRET: ${SERVICE_AUTH_SECRET:?SERVICE_AUTH_SECRET is required}
+      DATABASE_URL: ${ANALYTICS_DATABASE_URL:?ANALYTICS_DATABASE_URL is required}
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4102/health').then(r=>{if(!r.ok)process.exit(1)})"]
       interval: 15s
@@ -32,6 +41,10 @@ services:
       retries: 5
   intelligence:
     <<: *production-service
+    environment:
+      NODE_ENV: production
+      SERVICE_AUTH_SECRET: ${SERVICE_AUTH_SECRET:?SERVICE_AUTH_SECRET is required}
+      DATABASE_URL: ${INTELLIGENCE_DATABASE_URL:?INTELLIGENCE_DATABASE_URL is required}
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4103/health').then(r=>{if(!r.ok)process.exit(1)})"]
       interval: 15s
@@ -43,6 +56,7 @@ services:
       NODE_ENV: production
       SERVICE_AUTH_SECRET: ${SERVICE_AUTH_SECRET:?SERVICE_AUTH_SECRET is required}
       PROVENANCE_SIGNING_SECRET: ${PROVENANCE_SIGNING_SECRET:?PROVENANCE_SIGNING_SECRET is required}
+      DATABASE_URL: ${KNOWLEDGE_DATABASE_URL:?KNOWLEDGE_DATABASE_URL is required}
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4104/health').then(r=>{if(!r.ok)process.exit(1)})"]
       interval: 15s
@@ -54,6 +68,7 @@ services:
       NODE_ENV: production
       SERVICE_AUTH_SECRET: ${SERVICE_AUTH_SECRET:?SERVICE_AUTH_SECRET is required}
       MEMORY_ENCRYPTION_KEY: ${MEMORY_ENCRYPTION_KEY:?MEMORY_ENCRYPTION_KEY is required}
+      DATABASE_URL: ${MEMORY_DATABASE_URL:?MEMORY_DATABASE_URL is required}
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4105/health').then(r=>{if(!r.ok)process.exit(1)})"]
       interval: 15s
@@ -67,6 +82,8 @@ services:
       TOOL_CAPABILITY_SECRET: ${TOOL_CAPABILITY_SECRET:?TOOL_CAPABILITY_SECRET is required}
       AI_PROVIDER: ${AI_PROVIDER:-mock}
       AI_API_KEY: ${AI_API_KEY:-}
+      DATABASE_URL: ${NEURON_DATABASE_URL:?NEURON_DATABASE_URL is required}
+      REDIS_URL: ${REDIS_URL:?REDIS_URL is required}
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4106/health').then(r=>{if(!r.ok)process.exit(1)})"]
       interval: 15s
@@ -84,6 +101,8 @@ services:
       KNOWLEDGE_URL: http://knowledge:4104
       MEMORY_URL: http://memory:4105
       NEURON_URL: http://neuron:4106
+      DATABASE_URL: ${BRAIN_DATABASE_URL:?BRAIN_DATABASE_URL is required}
+      REDIS_URL: ${REDIS_URL:?REDIS_URL is required}
     depends_on:
       agents: { condition: service_healthy }
       analytics: { condition: service_healthy }

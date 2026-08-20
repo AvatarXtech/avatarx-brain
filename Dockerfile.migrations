@@ -1,0 +1,8 @@
+FROM alpine:3.21
+RUN apk add --no-cache postgresql-client
+WORKDIR /app
+COPY db ./db
+COPY scripts/migrate.sh ./scripts/migrate.sh
+RUN chmod 0555 ./scripts/migrate.sh
+USER 1000
+ENTRYPOINT ["/app/scripts/migrate.sh"]
