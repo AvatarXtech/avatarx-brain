@@ -8,6 +8,8 @@ Phase 8 is the production-readiness layer. Every backend now validates strong se
 
 Phase 9 establishes the shared platform/data boundary and a service-owned `brain` PostgreSQL schema for orchestration runs and session bindings. Every AI repository owns its migrations and credential scope; services exchange data only through authenticated APIs or domain events.
 
+Phase 10 activates PostgreSQL runtime persistence for Agents, Analytics, Knowledge and Memory in the hardened production overlay. File stores remain development and rollback sources; checksum-verified backfill must complete before traffic cutover.
+
 ## Run the ecosystem
 
 Place the seven repositories in the same parent directory. Install the website once:
