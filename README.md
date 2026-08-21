@@ -10,6 +10,8 @@ Phase 9 establishes the shared platform/data boundary and a service-owned `brain
 
 Phase 10 activates PostgreSQL runtime persistence for Agents, Analytics, Knowledge and Memory in the hardened production overlay. File stores remain development and rollback sources; checksum-verified backfill must complete before traffic cutover.
 
+The next production slices activate Neuron and Intelligence PostgreSQL runtimes. Neuron provides horizontally consistent tenant profiles, atomic budget accounting, usage reservations, and leased idempotency. Intelligence persists tenant-isolated decisions, hourly routing performance, and governed active policy versions. Local development retains in-memory adapters.
+
 ## Run the ecosystem
 
 Place the seven repositories in the same parent directory. Install the website once:
