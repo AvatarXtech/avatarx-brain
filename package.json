@@ -7,6 +7,7 @@
     "test:ecosystem": "node scripts/verify-ecosystem.mjs",
     "test:production": "node --test scripts/*.test.mjs",
     "validate:production": "node scripts/validate-production.mjs",
-    "backup:state": "node scripts/backup-state.mjs"
+    "backup:state": "node scripts/backup-state.mjs",
+    "start:movie-runtime": "node scripts/movie-pipeline-server.mjs"
   }
 }
