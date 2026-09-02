@@ -1,0 +1,291 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.avatarx.ai/movie/avatarx.movie.event.v1.1.json",
+  "title": "AvatarX AI Movie Pipeline Event v1.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "specversion",
+    "id",
+    "type",
+    "source",
+    "tenantId",
+    "projectId",
+    "runId",
+    "traceId",
+    "correlationId",
+    "occurredAt",
+    "data"
+  ],
+  "properties": {
+    "specversion": {
+      "const": "1.1"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "type": {
+      "enum": [
+        "movie.production.initialized",
+        "movie.scene.direction.requested",
+        "movie.continuity.evaluated",
+        "movie.pipeline.commanded",
+        "movie.pipeline.completed",
+        "movie.workflow.requested",
+        "movie.workflow.started",
+        "movie.workflow.completed",
+        "movie.knowledge.query.requested",
+        "movie.knowledge.context.resolved",
+        "movie.memory.recall.requested",
+        "movie.memory.recalled",
+        "movie.memory.recorded",
+        "movie.intelligence.decision.requested",
+        "movie.model.selected",
+        "movie.inference.requested",
+        "movie.inference.started",
+        "movie.inference.completed",
+        "movie.shot.regeneration.requested",
+        "movie.approval.required"
+      ]
+    },
+    "source": {
+      "type": "string",
+      "pattern": "^avatarx-[a-z0-9-]+$"
+    },
+    "tenantId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "projectId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sceneId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "shotId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "attemptId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "traceId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "correlationId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "causationId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "idempotencyKey": {
+      "type": "string",
+      "minLength": 1
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "data": {
+      "type": "object"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "x-avatarx-routing": {
+    "movie.production.initialized": {
+      "producers": [
+        "avatarx-ai-director"
+      ],
+      "consumers": [
+        "avatarx-brain",
+        "avatarx-analytics"
+      ]
+    },
+    "movie.scene.direction.requested": {
+      "producers": [
+        "avatarx-ai-director"
+      ],
+      "consumers": [
+        "avatarx-brain",
+        "avatarx-analytics"
+      ]
+    },
+    "movie.continuity.evaluated": {
+      "producers": [
+        "avatarx-ai-continuity"
+      ],
+      "consumers": [
+        "avatarx-brain",
+        "avatarx-memory",
+        "avatarx-analytics"
+      ]
+    },
+    "movie.pipeline.commanded": {
+      "producers": [
+        "avatarx-brain"
+      ],
+      "consumers": [
+        "avatarx-analytics"
+      ]
+    },
+    "movie.pipeline.completed": {
+      "producers": [
+        "avatarx-brain"
+      ],
+      "consumers": [
+        "avatarx-ai-director",
+        "avatarx-analytics"
+      ]
+    },
+    "movie.workflow.requested": {
+      "producers": [
+        "avatarx-brain"
+      ],
+      "consumers": [
+        "avatarx-agents",
+        "avatarx-analytics"
+      ]
+    },
+    "movie.workflow.started": {
+      "producers": [
+        "avatarx-agents"
+      ],
+      "consumers": [
+        "avatarx-analytics"
+      ]
+    },
+    "movie.knowledge.query.requested": {
+      "producers": [
+        "avatarx-agents"
+      ],
+      "consumers": [
+        "avatarx-knowledge",
+        "avatarx-analytics"
+      ]
+    },
+    "movie.knowledge.context.resolved": {
+      "producers": [
+        "avatarx-knowledge"
+      ],
+      "consumers": [
+        "avatarx-agents",
+        "avatarx-analytics"
+      ]
+    },
+    "movie.memory.recall.requested": {
+      "producers": [
+        "avatarx-agents"
+      ],
+      "consumers": [
+        "avatarx-memory",
+        "avatarx-analytics"
+      ]
+    },
+    "movie.memory.recalled": {
+      "producers": [
+        "avatarx-memory"
+      ],
+      "consumers": [
+        "avatarx-agents",
+        "avatarx-analytics"
+      ]
+    },
+    "movie.memory.recorded": {
+      "producers": [
+        "avatarx-memory"
+      ],
+      "consumers": [
+        "avatarx-analytics"
+      ]
+    },
+    "movie.intelligence.decision.requested": {
+      "producers": [
+        "avatarx-agents"
+      ],
+      "consumers": [
+        "avatarx-intelligence",
+        "avatarx-analytics"
+      ]
+    },
+    "movie.model.selected": {
+      "producers": [
+        "avatarx-intelligence"
+      ],
+      "consumers": [
+        "avatarx-neuron",
+        "avatarx-analytics"
+      ]
+    },
+    "movie.inference.requested": {
+      "producers": [
+        "avatarx-intelligence"
+      ],
+      "consumers": [
+        "avatarx-neuron",
+        "avatarx-analytics"
+      ]
+    },
+    "movie.inference.started": {
+      "producers": [
+        "avatarx-neuron"
+      ],
+      "consumers": [
+        "avatarx-analytics"
+      ]
+    },
+    "movie.inference.completed": {
+      "producers": [
+        "avatarx-neuron"
+      ],
+      "consumers": [
+        "avatarx-agents",
+        "avatarx-ai-continuity",
+        "avatarx-analytics"
+      ]
+    },
+    "movie.shot.regeneration.requested": {
+      "producers": [
+        "avatarx-brain"
+      ],
+      "consumers": [
+        "avatarx-agents",
+        "avatarx-analytics"
+      ]
+    },
+    "movie.approval.required": {
+      "producers": [
+        "avatarx-brain"
+      ],
+      "consumers": [
+        "avatarx-ai-director",
+        "avatarx-analytics"
+      ]
+    },
+    "movie.workflow.completed": {
+      "producers": [
+        "avatarx-agents"
+      ],
+      "consumers": [
+        "avatarx-analytics"
+      ]
+    }
+  }
+}
