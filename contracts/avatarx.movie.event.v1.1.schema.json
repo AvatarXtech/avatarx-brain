@@ -34,6 +34,7 @@
         "movie.pipeline.completed",
         "movie.workflow.requested",
         "movie.workflow.started",
+        "movie.workflow.completed",
         "movie.knowledge.query.requested",
         "movie.knowledge.context.resolved",
         "movie.memory.recall.requested",
@@ -255,6 +256,7 @@
         "avatarx-neuron"
       ],
       "consumers": [
+        "avatarx-agents",
         "avatarx-ai-continuity",
         "avatarx-analytics"
       ]
@@ -274,6 +276,14 @@
       ],
       "consumers": [
         "avatarx-ai-director",
+        "avatarx-analytics"
+      ]
+    },
+    "movie.workflow.completed": {
+      "producers": [
+        "avatarx-agents"
+      ],
+      "consumers": [
         "avatarx-analytics"
       ]
     }
