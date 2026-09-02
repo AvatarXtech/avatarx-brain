@@ -1,6 +1,9 @@
 -- AvatarX AI Movie Pipeline runtime v1.1
--- Tables are service-local; tenant_id is included in every key and lookup.
-CREATE TABLE IF NOT EXISTS movie_event_inbox (
+-- Service-owned schema: brain. Every key and lookup is tenant-scoped.
+BEGIN;
+CREATE SCHEMA IF NOT EXISTS brain;
+
+CREATE TABLE IF NOT EXISTS brain.movie_event_inbox (
   id bigserial PRIMARY KEY,
   tenant_id text NOT NULL,
   project_id text NOT NULL,
@@ -18,7 +21,7 @@ CREATE TABLE IF NOT EXISTS movie_event_inbox (
   UNIQUE (tenant_id, event_id)
 );
 
-CREATE TABLE IF NOT EXISTS movie_event_outbox (
+CREATE TABLE IF NOT EXISTS brain.movie_event_outbox (
   id bigserial PRIMARY KEY,
   tenant_id text NOT NULL,
   project_id text NOT NULL,
@@ -36,7 +39,7 @@ CREATE TABLE IF NOT EXISTS movie_event_outbox (
   UNIQUE (tenant_id, event_id)
 );
 
-CREATE TABLE IF NOT EXISTS movie_pipeline_runs (
+CREATE TABLE IF NOT EXISTS brain.movie_pipeline_runs (
   tenant_id text NOT NULL,
   project_id text NOT NULL,
   run_id text NOT NULL,
@@ -46,6 +49,7 @@ CREATE TABLE IF NOT EXISTS movie_pipeline_runs (
   PRIMARY KEY (tenant_id, run_id)
 );
 
-CREATE INDEX IF NOT EXISTS movie_event_inbox_run_idx ON movie_event_inbox (tenant_id, run_id, received_at);
-CREATE INDEX IF NOT EXISTS movie_event_outbox_publish_idx ON movie_event_outbox (status, next_attempt_at, created_at);
-CREATE INDEX IF NOT EXISTS movie_pipeline_runs_project_idx ON movie_pipeline_runs (tenant_id, project_id, updated_at);
+CREATE INDEX IF NOT EXISTS movie_event_inbox_run_idx ON brain.movie_event_inbox (tenant_id, run_id, received_at);
+CREATE INDEX IF NOT EXISTS movie_event_outbox_publish_idx ON brain.movie_event_outbox (status, next_attempt_at, created_at);
+CREATE INDEX IF NOT EXISTS movie_pipeline_runs_project_idx ON brain.movie_pipeline_runs (tenant_id, project_id, updated_at);
+COMMIT;
