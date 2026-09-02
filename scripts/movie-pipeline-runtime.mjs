@@ -15,16 +15,19 @@ export const SERVICE_PROFILES = Object.freeze({
     }
   },
   'avatarx-agents': {
-    accepts: ['movie.workflow.requested', 'movie.shot.regeneration.requested'],
+    accepts: ['movie.workflow.requested', 'movie.shot.regeneration.requested', 'movie.knowledge.context.resolved', 'movie.memory.recalled', 'movie.inference.completed'],
     transitions: {
       'movie.workflow.requested': ['movie.workflow.started', 'movie.knowledge.query.requested', 'movie.memory.recall.requested', 'movie.intelligence.decision.requested'],
-      'movie.shot.regeneration.requested': ['movie.workflow.started', 'movie.intelligence.decision.requested']
+      'movie.shot.regeneration.requested': ['movie.workflow.started', 'movie.intelligence.decision.requested'],
+      'movie.knowledge.context.resolved': [],
+      'movie.memory.recalled': [],
+      'movie.inference.completed': ['movie.workflow.completed']
     }
   },
   'avatarx-knowledge': { accepts: ['movie.knowledge.query.requested'], transitions: { 'movie.knowledge.query.requested': ['movie.knowledge.context.resolved'] } },
   'avatarx-memory': { accepts: ['movie.memory.recall.requested', 'movie.continuity.evaluated'], transitions: { 'movie.memory.recall.requested': ['movie.memory.recalled'], 'movie.continuity.evaluated': ['movie.memory.recorded'] } },
   'avatarx-intelligence': { accepts: ['movie.intelligence.decision.requested'], transitions: { 'movie.intelligence.decision.requested': ['movie.model.selected', 'movie.inference.requested'] } },
-  'avatarx-neuron': { accepts: ['movie.inference.requested'], transitions: { 'movie.inference.requested': ['movie.inference.started', 'movie.inference.completed'] } },
+  'avatarx-neuron': { accepts: ['movie.model.selected', 'movie.inference.requested'], transitions: { 'movie.model.selected': [], 'movie.inference.requested': ['movie.inference.started', 'movie.inference.completed'] } },
   'avatarx-analytics': { accepts: ['*'], transitions: {} }
 });
 
@@ -125,7 +128,7 @@ export function createMovieRuntimeEndpoint({ service, store, maxRegenerations, e
       try { await (await runtime).ready(); return send(res, 200, { status: 'ready', service, eventVersion: EVENT_VERSION }); } catch { return fail(res, 503, 'MOVIE_RUNTIME_NOT_READY', 'Movie runtime persistence is unavailable'); }
     }
     if (req.method !== 'POST' || url.pathname !== '/v1/movie-events') return false;
-    try { const event = JSON.parse(bodyText || '{}'); const result = await (await runtime).ingest(event, tenantId); send(res, result.duplicate ? 200 : 202, result); }
+    try { let event; try { event = JSON.parse(bodyText || '{}'); } catch { throw new MovieRuntimeError(400, 'INVALID_JSON', 'Request body must be valid JSON'); } const result = await (await runtime).ingest(event, tenantId); send(res, result.duplicate ? 200 : 202, result); }
     catch (error) { fail(res, error.status ?? 500, error.code ?? 'MOVIE_RUNTIME_ERROR', error.status ? error.message : 'Movie event processing failed'); }
     return true;
   };
