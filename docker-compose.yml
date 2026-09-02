@@ -86,7 +86,9 @@ services:
       FEDERATION_DEADLINE_MS: ${FEDERATION_DEADLINE_MS:-5000}
     ports: ["4106:4106"]
   brain:
-    build: ./apps/website
+    build:
+      context: .
+      dockerfile: apps/website/Dockerfile
     restart: unless-stopped
     depends_on: [agents, analytics, intelligence, knowledge, memory, neuron]
     environment:
