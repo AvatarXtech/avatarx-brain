@@ -122,13 +122,14 @@ async function configuredStore(store, env) {
 }
 
 export function createMovieRuntimeEndpoint({ service, store, maxRegenerations, env = process.env } = {}) {
-  const runtime = configuredStore(store, env).then(value => new MovieEventRuntime({ service, store: value, maxRegenerations }));
+  let runtime;
+  const getRuntime = () => runtime ??= configuredStore(store, env).then(value => new MovieEventRuntime({ service, store: value, maxRegenerations }));
   return async function handle({ req, res, url, bodyText, tenantId, send, fail }) {
     if (req.method === 'GET' && url.pathname === '/ready/movie-runtime') {
-      try { await (await runtime).ready(); return send(res, 200, { status: 'ready', service, eventVersion: EVENT_VERSION }); } catch { return fail(res, 503, 'MOVIE_RUNTIME_NOT_READY', 'Movie runtime persistence is unavailable'); }
+      try { await (await getRuntime()).ready(); return send(res, 200, { status: 'ready', service, eventVersion: EVENT_VERSION }); } catch { return fail(res, 503, 'MOVIE_RUNTIME_NOT_READY', 'Movie runtime persistence is unavailable'); }
     }
     if (req.method !== 'POST' || url.pathname !== '/v1/movie-events') return false;
-    try { let event; try { event = JSON.parse(bodyText || '{}'); } catch { throw new MovieRuntimeError(400, 'INVALID_JSON', 'Request body must be valid JSON'); } const result = await (await runtime).ingest(event, tenantId); send(res, result.duplicate ? 200 : 202, result); }
+    try { let event; try { event = JSON.parse(bodyText || '{}'); } catch { throw new MovieRuntimeError(400, 'INVALID_JSON', 'Request body must be valid JSON'); } const result = await (await getRuntime()).ingest(event, tenantId); send(res, result.duplicate ? 200 : 202, result); }
     catch (error) { fail(res, error.status ?? 500, error.code ?? 'MOVIE_RUNTIME_ERROR', error.status ? error.message : 'Movie event processing failed'); }
     return true;
   };
