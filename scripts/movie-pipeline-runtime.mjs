@@ -1,6 +1,15 @@
 import { randomUUID } from 'node:crypto';
 
 export const EVENT_VERSION = '1.1';
+export const SERVICE_SCHEMAS = Object.freeze({
+  'avatarx-agents': 'agents',
+  'avatarx-analytics': 'analytics',
+  'avatarx-brain': 'brain',
+  'avatarx-intelligence': 'intelligence',
+  'avatarx-knowledge': 'knowledge',
+  'avatarx-memory': 'memory',
+  'avatarx-neuron': 'neuron'
+});
 export const SERVICE_PROFILES = Object.freeze({
   'avatarx-brain': {
     accepts: ['movie.production.initialized', 'movie.scene.direction.requested', 'movie.continuity.evaluated'],
@@ -71,27 +80,31 @@ export class InMemoryMovieEventStore {
 }
 
 export class PostgresMovieEventStore {
-  constructor(pool) { this.pool = pool; }
+  constructor(pool, { schema } = {}) {
+    if (!/^[a-z][a-z0-9_]*$/.test(schema ?? '')) throw new Error('A safe service-owned PostgreSQL schema is required');
+    this.pool = pool; this.schema = schema;
+  }
+  table(name) { return `"${this.schema}"."${name}"`; }
   async ingest(event, outputs, service) {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      const existing = await client.query('SELECT result FROM movie_event_inbox WHERE tenant_id=$1 AND event_id=$2 FOR UPDATE', [event.tenantId, event.id]);
+      const existing = await client.query(`SELECT result FROM ${this.table('movie_event_inbox')} WHERE tenant_id=$1 AND event_id=$2 FOR UPDATE`, [event.tenantId, event.id]);
       if (existing.rowCount) { await client.query('COMMIT'); return { duplicate: true, ...existing.rows[0].result }; }
       const result = { accepted: true, eventId: event.id, runId: event.runId, emitted: outputs.map(item => item.type) };
-      await client.query('INSERT INTO movie_event_inbox(tenant_id,project_id,event_id,run_id,event_type,service,envelope,status,attempts,result,processed_at) VALUES($1,$2,$3,$4,$5,$6,$7,\'processed\',1,$8,now())', [event.tenantId,event.projectId,event.id,event.runId,event.type,service,event,result]);
-      await client.query('INSERT INTO movie_pipeline_runs(tenant_id,project_id,run_id,last_event_type,trace_id,updated_at) VALUES($1,$2,$3,$4,$5,now()) ON CONFLICT(tenant_id,run_id) DO UPDATE SET project_id=EXCLUDED.project_id,last_event_type=EXCLUDED.last_event_type,trace_id=EXCLUDED.trace_id,updated_at=now()', [event.tenantId,event.projectId,event.runId,event.type,event.traceId]);
-      for (const output of outputs) await client.query('INSERT INTO movie_event_outbox(tenant_id,project_id,event_id,run_id,event_type,envelope,status,next_attempt_at) VALUES($1,$2,$3,$4,$5,$6,\'pending\',now()) ON CONFLICT(tenant_id,event_id) DO NOTHING', [output.tenantId,output.projectId,output.id,output.runId,output.type,output]);
+      await client.query(`INSERT INTO ${this.table('movie_event_inbox')}(tenant_id,project_id,event_id,run_id,event_type,service,envelope,status,attempts,result,processed_at) VALUES($1,$2,$3,$4,$5,$6,$7,'processed',1,$8,now())`, [event.tenantId,event.projectId,event.id,event.runId,event.type,service,event,result]);
+      await client.query(`INSERT INTO ${this.table('movie_pipeline_runs')}(tenant_id,project_id,run_id,last_event_type,trace_id,updated_at) VALUES($1,$2,$3,$4,$5,now()) ON CONFLICT(tenant_id,run_id) DO UPDATE SET project_id=EXCLUDED.project_id,last_event_type=EXCLUDED.last_event_type,trace_id=EXCLUDED.trace_id,updated_at=now()`, [event.tenantId,event.projectId,event.runId,event.type,event.traceId]);
+      for (const output of outputs) await client.query(`INSERT INTO ${this.table('movie_event_outbox')}(tenant_id,project_id,event_id,run_id,event_type,envelope,status,next_attempt_at) VALUES($1,$2,$3,$4,$5,$6,'pending',now()) ON CONFLICT(tenant_id,event_id) DO NOTHING`, [output.tenantId,output.projectId,output.id,output.runId,output.type,output]);
       await client.query('COMMIT'); return { duplicate: false, ...result };
     } catch (error) { await client.query('ROLLBACK'); throw error; } finally { client.release(); }
   }
   async failOutbox(tenantId, eventId, error, maxAttempts = 5) {
-    const result = await this.pool.query("UPDATE movie_event_outbox SET attempts=attempts+1,last_error=$3,status=CASE WHEN attempts+1 >= $4 THEN 'dead_letter' ELSE 'pending' END,next_attempt_at=now()+(LEAST(60,power(2,attempts+1))||' seconds')::interval WHERE tenant_id=$1 AND event_id=$2 RETURNING *", [tenantId,eventId,String(error?.message ?? error),maxAttempts]); return result.rows[0] ?? null;
+    const result = await this.pool.query(`UPDATE ${this.table('movie_event_outbox')} SET attempts=attempts+1,last_error=$3,status=CASE WHEN attempts+1 >= $4 THEN 'dead_letter' ELSE 'pending' END,next_attempt_at=now()+(LEAST(60,power(2,attempts+1))||' seconds')::interval WHERE tenant_id=$1 AND event_id=$2 RETURNING *`, [tenantId,eventId,String(error?.message ?? error),maxAttempts]); return result.rows[0] ?? null;
   }
   async claimOutbox(limit = 25) {
-    const result = await this.pool.query("WITH claimed AS (SELECT id FROM movie_event_outbox WHERE status='pending' AND next_attempt_at<=now() ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT $1) UPDATE movie_event_outbox o SET status='publishing',locked_at=now() FROM claimed WHERE o.id=claimed.id RETURNING o.envelope", [limit]); return result.rows.map(row => row.envelope);
+    const table = this.table('movie_event_outbox'); const result = await this.pool.query(`WITH claimed AS (SELECT id FROM ${table} WHERE status='pending' AND next_attempt_at<=now() ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT $1) UPDATE ${table} o SET status='publishing',locked_at=now() FROM claimed WHERE o.id=claimed.id RETURNING o.envelope`, [limit]); return result.rows.map(row => row.envelope);
   }
-  async markPublished(tenantId, eventId) { const result = await this.pool.query("UPDATE movie_event_outbox SET status='published',published_at=now() WHERE tenant_id=$1 AND event_id=$2 RETURNING *", [tenantId,eventId]); return result.rows[0] ?? null; }
+  async markPublished(tenantId, eventId) { const result = await this.pool.query(`UPDATE ${this.table('movie_event_outbox')} SET status='published',published_at=now() WHERE tenant_id=$1 AND event_id=$2 RETURNING *`, [tenantId,eventId]); return result.rows[0] ?? null; }
   async ready() { await this.pool.query('SELECT 1'); return true; }
 }
 
@@ -113,17 +126,17 @@ export class MovieEventRuntime {
   ready() { return this.store.ready(); }
 }
 
-async function configuredStore(store, env) {
+async function configuredStore(store, env, service) {
   if (store) return store;
   const postgres = env.PERSISTENCE_BACKEND === 'postgres' || env.NODE_ENV === 'production';
   if (!postgres) return new InMemoryMovieEventStore();
   if (!env.DATABASE_URL) throw new Error('DATABASE_URL is required for the movie runtime');
-  const { Pool } = await import('pg'); return new PostgresMovieEventStore(new Pool({ connectionString: env.DATABASE_URL }));
+  const { Pool } = await import('pg'); return new PostgresMovieEventStore(new Pool({ connectionString: env.DATABASE_URL }), { schema: SERVICE_SCHEMAS[service] });
 }
 
 export function createMovieRuntimeEndpoint({ service, store, maxRegenerations, env = process.env } = {}) {
   let runtime;
-  const getRuntime = () => runtime ??= configuredStore(store, env).then(value => new MovieEventRuntime({ service, store: value, maxRegenerations }));
+  const getRuntime = () => runtime ??= configuredStore(store, env, service).then(value => new MovieEventRuntime({ service, store: value, maxRegenerations }));
   return async function handle({ req, res, url, bodyText, tenantId, send, fail }) {
     if (req.method === 'GET' && url.pathname === '/ready/movie-runtime') {
       try { await (await getRuntime()).ready(); return send(res, 200, { status: 'ready', service, eventVersion: EVENT_VERSION }); } catch { return fail(res, 503, 'MOVIE_RUNTIME_NOT_READY', 'Movie runtime persistence is unavailable'); }
