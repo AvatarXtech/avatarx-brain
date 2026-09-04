@@ -44,59 +44,162 @@ test('avatarx-brain dead-letters repeatedly failing publications', async () => {
   assert.equal(failed.status, 'dead_letter');
 });
 
-test('avatarx-brain retrieves tenant-scoped movie events with filters', async () => {
+test('avatarx-brain retrieves tenant-scoped consumed and emitted movie events with filters', async () => {
   const store = new InMemoryMovieEventStore();
-  const runtime = new MovieEventRuntime({
-    service: 'avatarx-brain',
-    store,
-  });
 
-  const base = event('movie.scene.direction.requested');
+  const runtime =
+    new MovieEventRuntime({
+      service: 'avatarx-brain',
+      store,
+    });
 
-  await runtime.ingest(base, 'tenant-a');
+  const base =
+    event(
+      'movie.scene.direction.requested',
+    );
+
+  await runtime.ingest(
+    base,
+    'tenant-a',
+  );
 
   await runtime.ingest(
     {
       ...base,
-      id: crypto.randomUUID(),
-      projectId: 'movie-b',
-      runId: 'run-b',
-      occurredAt: new Date(
-        Date.parse(base.occurredAt) + 1000
-      ).toISOString(),
+
+      id:
+        crypto.randomUUID(),
+
+      projectId:
+        'movie-b',
+
+      runId:
+        'run-b',
+
+      occurredAt:
+        new Date(
+          Date.parse(base.occurredAt) +
+            1000,
+        ).toISOString(),
     },
     'tenant-a',
   );
 
-  const all = await runtime.getEvents({
-    tenantId: 'tenant-a',
-  });
+  const all =
+    await runtime.getEvents({
+      tenantId:
+        'tenant-a',
+    });
 
-  assert.equal(all.length, 2);
+  assert.equal(
+    all.length,
+    4,
+  );
 
-  const project = await runtime.getEvents({
-    tenantId: 'tenant-a',
-    projectId: 'movie-b',
-  });
+  assert.equal(
+    all.filter(
+      item =>
+        item.type ===
+        'movie.scene.direction.requested',
+    ).length,
+    2,
+  );
 
-  assert.equal(project.length, 1);
-  assert.equal(project[0].projectId, 'movie-b');
+  assert.equal(
+    all.filter(
+      item =>
+        item.type ===
+        'movie.workflow.requested',
+    ).length,
+    2,
+  );
 
-  const run = await runtime.getEvents({
-    tenantId: 'tenant-a',
-    runId: 'run-a',
-  });
+  const project =
+    await runtime.getEvents({
+      tenantId:
+        'tenant-a',
 
-  assert.equal(run.length, 1);
-  assert.equal(run[0].runId, 'run-a');
+      projectId:
+        'movie-b',
+    });
 
-  const limited = await runtime.getEvents({
-    tenantId: 'tenant-a',
-    limit: 1,
-  });
+  assert.equal(
+    project.length,
+    2,
+  );
 
-  assert.equal(limited.length, 1);
-  assert.equal(limited[0].projectId, 'movie-b');
+  assert.ok(
+    project.every(
+      item =>
+        item.projectId ===
+        'movie-b',
+    ),
+  );
+
+  assert.deepEqual(
+    new Set(
+      project.map(
+        item => item.type,
+      ),
+    ),
+    new Set([
+      'movie.scene.direction.requested',
+      'movie.workflow.requested',
+    ]),
+  );
+
+  const run =
+    await runtime.getEvents({
+      tenantId:
+        'tenant-a',
+
+      runId:
+        'run-a',
+    });
+
+  assert.equal(
+    run.length,
+    2,
+  );
+
+  assert.ok(
+    run.every(
+      item =>
+        item.runId ===
+        'run-a',
+    ),
+  );
+
+  assert.deepEqual(
+    new Set(
+      run.map(
+        item => item.type,
+      ),
+    ),
+    new Set([
+      'movie.scene.direction.requested',
+      'movie.workflow.requested',
+    ]),
+  );
+
+  const limited =
+    await runtime.getEvents({
+      tenantId:
+        'tenant-a',
+
+      limit:
+        1,
+    });
+
+  assert.equal(
+    limited.length,
+    1,
+  );
+
+  assert.equal(
+    limited[0].tenantId,
+    'tenant-a',
+  );
 });
 
 test('avatarx-brain movie event retrieval validates tenant and limit', async () => {
@@ -132,5 +235,133 @@ test('avatarx-brain movie event retrieval validates tenant and limit', async () 
     error =>
       error instanceof MovieRuntimeError &&
       error.code === 'INVALID_EVENT_LIMIT',
+  );
+});
+
+test('avatarx-brain retrieval includes emitted workflow events', async () => {
+  const store =
+    new InMemoryMovieEventStore();
+
+  const runtime =
+    new MovieEventRuntime({
+      service: 'avatarx-brain',
+      store,
+    });
+
+  const input =
+    event(
+      'movie.scene.direction.requested',
+      {
+        id:
+          crypto.randomUUID(),
+
+        projectId:
+          'movie-connected',
+
+        runId:
+          'run-connected',
+
+        traceId:
+          'trace-connected',
+
+        correlationId:
+          'scene-connected',
+      },
+    );
+
+  const result =
+    await runtime.ingest(
+      input,
+      'tenant-a',
+    );
+
+  assert.deepEqual(
+    result.emitted,
+    [
+      'movie.workflow.requested',
+    ],
+  );
+
+  const events =
+    await runtime.getEvents({
+      tenantId:
+        'tenant-a',
+
+      projectId:
+        'movie-connected',
+
+      runId:
+        'run-connected',
+
+      limit:
+        10,
+    });
+
+  assert.equal(
+    events.length,
+    2,
+  );
+
+  assert.deepEqual(
+    new Set(
+      events.map(
+        item => item.type,
+      ),
+    ),
+    new Set([
+      'movie.scene.direction.requested',
+      'movie.workflow.requested',
+    ]),
+  );
+
+  const workflow =
+    events.find(
+      item =>
+        item.type ===
+        'movie.workflow.requested',
+    );
+
+  assert.ok(
+    workflow,
+  );
+
+  assert.equal(
+    workflow.source,
+    'avatarx-brain',
+  );
+
+  assert.equal(
+    workflow.tenantId,
+    input.tenantId,
+  );
+
+  assert.equal(
+    workflow.projectId,
+    input.projectId,
+  );
+
+  assert.equal(
+    workflow.runId,
+    input.runId,
+  );
+
+  assert.equal(
+    workflow.traceId,
+    input.traceId,
+  );
+
+  assert.equal(
+    workflow.correlationId,
+    input.correlationId,
+  );
+
+  assert.equal(
+    workflow.causationId,
+    input.id,
+  );
+
+  assert.equal(
+    workflow.data.sourceEventType,
+    'movie.scene.direction.requested',
   );
 });

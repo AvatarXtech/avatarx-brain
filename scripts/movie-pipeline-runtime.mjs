@@ -68,8 +68,10 @@ export class InMemoryMovieEventStore {
   }
   async markPublished(tenantId, eventId) { const row = this.outbox.get(this.key(tenantId, eventId)); if (row) { row.status = 'published'; row.publishedAt = new Date().toISOString(); } return row ?? null; }
   async listEvents({ tenantId, projectId, runId, limit = 50 }) {
-const events = [...this.inbox.values()]
-.map(row => row.event)
+const events = [
+...this.inbox.values().map(row => row.event),
+...this.outbox.values().map(row => row.event),
+]
 .filter(event =>
 event.tenantId === tenantId &&
 (!projectId || event.projectId === projectId) &&
@@ -125,10 +127,23 @@ clauses.push(`run_id=$${values.length}`);
 values.push(limit);
 
 const result = await this.pool.query(
-`SELECT envelope
+`SELECT envelope, event_time
+FROM (
+SELECT
+envelope,
+processed_at AS event_time
 FROM movie_event_inbox
 WHERE ${clauses.join(' AND ')}
-ORDER BY processed_at DESC
+
+UNION ALL
+
+SELECT
+envelope,
+created_at AS event_time
+FROM movie_event_outbox
+WHERE ${clauses.join(' AND ')}
+) events
+ORDER BY event_time DESC
 LIMIT $${values.length}`,
 values
 );
