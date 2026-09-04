@@ -67,7 +67,23 @@ export class InMemoryMovieEventStore {
     const now = Date.now(); const rows = [...this.outbox.values()].filter(row => row.status === 'pending' && Date.parse(row.nextAttemptAt) <= now).slice(0, limit); for (const row of rows) row.status = 'publishing'; return rows.map(row => row.event);
   }
   async markPublished(tenantId, eventId) { const row = this.outbox.get(this.key(tenantId, eventId)); if (row) { row.status = 'published'; row.publishedAt = new Date().toISOString(); } return row ?? null; }
-  async ready() { return true; }
+  async listEvents({ tenantId, projectId, runId, limit = 50 }) {
+const events = [...this.inbox.values()]
+.map(row => row.event)
+.filter(event =>
+event.tenantId === tenantId &&
+(!projectId || event.projectId === projectId) &&
+(!runId || event.runId === runId)
+)
+.sort((a, b) =>
+Date.parse(b.occurredAt) -
+Date.parse(a.occurredAt)
+)
+.slice(0, limit);
+
+return events;
+}
+async ready() { return true; }
 }
 
 export class PostgresMovieEventStore {
@@ -92,7 +108,34 @@ export class PostgresMovieEventStore {
     const result = await this.pool.query("WITH claimed AS (SELECT id FROM movie_event_outbox WHERE status='pending' AND next_attempt_at<=now() ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT $1) UPDATE movie_event_outbox o SET status='publishing',locked_at=now() FROM claimed WHERE o.id=claimed.id RETURNING o.envelope", [limit]); return result.rows.map(row => row.envelope);
   }
   async markPublished(tenantId, eventId) { const result = await this.pool.query("UPDATE movie_event_outbox SET status='published',published_at=now() WHERE tenant_id=$1 AND event_id=$2 RETURNING *", [tenantId,eventId]); return result.rows[0] ?? null; }
-  async ready() { await this.pool.query('SELECT 1'); return true; }
+  async listEvents({ tenantId, projectId, runId, limit = 50 }) {
+const values = [tenantId];
+const clauses = ['tenant_id=$1'];
+
+if (projectId) {
+values.push(projectId);
+clauses.push(`project_id=$${values.length}`);
+}
+
+if (runId) {
+values.push(runId);
+clauses.push(`run_id=$${values.length}`);
+}
+
+values.push(limit);
+
+const result = await this.pool.query(
+`SELECT envelope
+FROM movie_event_inbox
+WHERE ${clauses.join(' AND ')}
+ORDER BY processed_at DESC
+LIMIT $${values.length}`,
+values
+);
+
+return result.rows.map(row => row.envelope);
+}
+async ready() { await this.pool.query('SELECT 1'); return true; }
 }
 
 function emittedEvent(input, type, service) {
@@ -110,7 +153,37 @@ export class MovieEventRuntime {
     const transition = this.profile.transitions[event.type]; const types = typeof transition === 'function' ? transition({ event, maxRegenerations: this.maxRegenerations }) : (transition ?? []);
     return this.store.ingest(event, types.map(type => emittedEvent(event, type, this.service)), this.service);
   }
-  ready() { return this.store.ready(); }
+  async getEvents({ tenantId, projectId, runId, limit = 50 }) {
+if (!tenantId) {
+throw new MovieRuntimeError(
+401,
+'TENANT_REQUIRED',
+'x-tenant-id header is required'
+);
+}
+
+const parsedLimit = Number(limit);
+
+if (
+!Number.isInteger(parsedLimit) ||
+parsedLimit < 1 ||
+parsedLimit > 100
+) {
+throw new MovieRuntimeError(
+400,
+'INVALID_EVENT_LIMIT',
+'limit must be an integer from 1 to 100'
+);
+}
+
+return this.store.listEvents({
+tenantId,
+projectId,
+runId,
+limit: parsedLimit,
+});
+}
+ready() { return this.store.ready(); }
 }
 
 async function configuredStore(store, env) {
@@ -128,7 +201,37 @@ export function createMovieRuntimeEndpoint({ service, store, maxRegenerations, e
     if (req.method === 'GET' && url.pathname === '/ready/movie-runtime') {
       try { await (await getRuntime()).ready(); return send(res, 200, { status: 'ready', service, eventVersion: EVENT_VERSION }); } catch { return fail(res, 503, 'MOVIE_RUNTIME_NOT_READY', 'Movie runtime persistence is unavailable'); }
     }
-    if (req.method !== 'POST' || url.pathname !== '/v1/movie-events') return false;
+    if (req.method === 'GET' && url.pathname === '/v1/movie-events') {
+try {
+const events = await (await getRuntime()).getEvents({
+tenantId,
+projectId:
+url.searchParams.get('projectId') || undefined,
+runId:
+url.searchParams.get('runId') || undefined,
+limit:
+url.searchParams.get('limit') ?? 50,
+});
+
+send(res, 200, {
+events,
+count: events.length,
+});
+} catch (error) {
+fail(
+res,
+error.status ?? 500,
+error.code ?? 'MOVIE_RUNTIME_ERROR',
+error.status
+? error.message
+: 'Movie event retrieval failed'
+);
+}
+
+return true;
+}
+
+if (req.method !== 'POST' || url.pathname !== '/v1/movie-events') return false;
     try { let event; try { event = JSON.parse(bodyText || '{}'); } catch { throw new MovieRuntimeError(400, 'INVALID_JSON', 'Request body must be valid JSON'); } const result = await (await getRuntime()).ingest(event, tenantId); send(res, result.duplicate ? 200 : 202, result); }
     catch (error) { fail(res, error.status ?? 500, error.code ?? 'MOVIE_RUNTIME_ERROR', error.status ? error.message : 'Movie event processing failed'); }
     return true;

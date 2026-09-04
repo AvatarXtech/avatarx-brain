@@ -43,3 +43,94 @@ test('avatarx-brain dead-letters repeatedly failing publications', async () => {
   const failed = await store.failOutbox('tenant-a', output.id, new Error('offline'), 2);
   assert.equal(failed.status, 'dead_letter');
 });
+
+test('avatarx-brain retrieves tenant-scoped movie events with filters', async () => {
+  const store = new InMemoryMovieEventStore();
+  const runtime = new MovieEventRuntime({
+    service: 'avatarx-brain',
+    store,
+  });
+
+  const base = event('movie.scene.direction.requested');
+
+  await runtime.ingest(base, 'tenant-a');
+
+  await runtime.ingest(
+    {
+      ...base,
+      id: crypto.randomUUID(),
+      projectId: 'movie-b',
+      runId: 'run-b',
+      occurredAt: new Date(
+        Date.parse(base.occurredAt) + 1000
+      ).toISOString(),
+    },
+    'tenant-a',
+  );
+
+  const all = await runtime.getEvents({
+    tenantId: 'tenant-a',
+  });
+
+  assert.equal(all.length, 2);
+
+  const project = await runtime.getEvents({
+    tenantId: 'tenant-a',
+    projectId: 'movie-b',
+  });
+
+  assert.equal(project.length, 1);
+  assert.equal(project[0].projectId, 'movie-b');
+
+  const run = await runtime.getEvents({
+    tenantId: 'tenant-a',
+    runId: 'run-a',
+  });
+
+  assert.equal(run.length, 1);
+  assert.equal(run[0].runId, 'run-a');
+
+  const limited = await runtime.getEvents({
+    tenantId: 'tenant-a',
+    limit: 1,
+  });
+
+  assert.equal(limited.length, 1);
+  assert.equal(limited[0].projectId, 'movie-b');
+});
+
+test('avatarx-brain movie event retrieval validates tenant and limit', async () => {
+  const runtime = new MovieEventRuntime({
+    service: 'avatarx-brain',
+    store: new InMemoryMovieEventStore(),
+  });
+
+  await assert.rejects(
+    runtime.getEvents({
+      tenantId: '',
+    }),
+    error =>
+      error instanceof MovieRuntimeError &&
+      error.code === 'TENANT_REQUIRED',
+  );
+
+  await assert.rejects(
+    runtime.getEvents({
+      tenantId: 'tenant-a',
+      limit: 0,
+    }),
+    error =>
+      error instanceof MovieRuntimeError &&
+      error.code === 'INVALID_EVENT_LIMIT',
+  );
+
+  await assert.rejects(
+    runtime.getEvents({
+      tenantId: 'tenant-a',
+      limit: 101,
+    }),
+    error =>
+      error instanceof MovieRuntimeError &&
+      error.code === 'INVALID_EVENT_LIMIT',
+  );
+});
