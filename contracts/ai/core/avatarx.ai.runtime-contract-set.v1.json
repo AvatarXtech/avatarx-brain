@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "owner": "avatarx-foundation",
+  "contractSet": "avatarx.ai.core.runtime",
+  "version": "1",
+  "status": "current",
+  "contracts": [
+    {
+      "name": "request",
+      "file": "avatarx.ai.request.v1.schema.json",
+      "type": "json-schema"
+    },
+    {
+      "name": "result",
+      "file": "avatarx.ai.result.v1.schema.json",
+      "type": "json-schema"
+    },
+    {
+      "name": "trace-context",
+      "file": "avatarx.ai.trace-context.v1.schema.json",
+      "type": "json-schema"
+    },
+    {
+      "name": "error-taxonomy",
+      "file": "avatarx.ai.error-taxonomy.v1.json",
+      "type": "policy"
+    },
+    {
+      "name": "service-capabilities",
+      "file": "avatarx.ai.service-capabilities.v1.json",
+      "type": "registry"
+    },
+    {
+      "name": "operations",
+      "file": "avatarx.ai.operations.v1.json",
+      "type": "registry"
+    },
+    {
+      "name": "execution-context-policy",
+      "file": "avatarx.ai.execution-context-policy.v1.json",
+      "type": "policy"
+    },
+    {
+      "name": "delivery-policy",
+      "file": "avatarx.ai.delivery-policy.v1.json",
+      "type": "policy"
+    }
+  ],
+  "consumers": [
+    "avatarx-brain",
+    "avatarx-intelligence",
+    "avatarx-neuron",
+    "avatarx-agents",
+    "avatarx-memory",
+    "avatarx-knowledge"
+  ],
+  "externalIntegrations": [
+    "avatarx-ai-director",
+    "avatarx-ai-continuity"
+  ],
+  "rules": {
+    "foundationOwnsEnvelope": true,
+    "servicesOwnPayloadSemantics": true,
+    "servicesOwnRuntimeImplementation": true,
+    "servicesOwnDatabaseMigrations": true,
+    "crossServiceTableAccess": false,
+    "sharedServiceCredentials": false
+  }
+}

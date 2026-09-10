@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "owner": "avatarx-foundation",
+  "contractFamily": "avatarx.ai.runtime",
+  "idempotency": {
+    "supported": true,
+    "keyField": "idempotencyKey",
+    "sameKeySameOperationMustNotDuplicateConsequentialWork": true,
+    "tenantScoped": true,
+    "workflowScoped": true
+  },
+  "retry": {
+    "bounded": true,
+    "attemptField": "attempt",
+    "retryOnlyWhenErrorIsRetryable": true,
+    "deadlineMustBeRespected": true,
+    "backoffRequired": true,
+    "retryMayNotChangeTenant": true,
+    "retryMayNotChangeWorkflow": true
+  },
+  "cancellation": {
+    "supported": true,
+    "terminalStatus": "CANCELLED",
+    "mustPropagateDownstream": true,
+    "completedConsequentialWorkMustNotBeSilentlyReversed": true
+  },
+  "timeout": {
+    "terminalStatus": "TIMED_OUT",
+    "deadlineField": "deadlineAt",
+    "downstreamDeadlineMayNotIncrease": true
+  },
+  "failure": {
+    "unknownErrorsFailClosed": true,
+    "retryabilityMustBeExplicit": true,
+    "terminalFailureMustBeObservable": true
+  },
+  "security": {
+    "tenantIdImmutable": true,
+    "serviceMayNotElevateActor": true,
+    "crossTenantRetryForbidden": true,
+    "crossTenantReplayForbidden": true
+  }
+}

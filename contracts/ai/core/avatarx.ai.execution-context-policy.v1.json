@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "owner": "avatarx-foundation",
+  "requiredStableFields": [
+    "requestId",
+    "traceId",
+    "correlationId",
+    "workflowId",
+    "sessionId",
+    "tenantId"
+  ],
+  "propagationRules": {
+    "requestIdStableAcrossRequest": true,
+    "traceIdStableAcrossWorkflow": true,
+    "correlationIdStableAcrossWorkflow": true,
+    "workflowIdStableAcrossWorkflow": true,
+    "sessionIdStableAcrossSession": true,
+    "tenantIdImmutable": true,
+    "causationIdTracksImmediateParent": true,
+    "deadlineMustNotIncrease": true,
+    "attemptMustIncreaseOnRetry": true
+  },
+  "securityRules": {
+    "tenantIdMayNotBeOverriddenByPayload": true,
+    "actorIdMayNotBeElevatedByDownstreamService": true,
+    "projectIdMayNotCrossTenantBoundary": true
+  }
+}

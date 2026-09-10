@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://avatarx.ai/contracts/ai/core/avatarx.ai.result.v1.schema.json",
+  "title": "AvatarX AI Core Result V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "requestId",
+    "traceId",
+    "correlationId",
+    "workflowId",
+    "sourceService",
+    "status",
+    "timestamp"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1"
+    },
+    "requestId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "traceId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "correlationId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "workflowId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "sourceService": {
+      "enum": [
+        "avatarx-brain",
+        "avatarx-intelligence",
+        "avatarx-neuron",
+        "avatarx-agents",
+        "avatarx-memory",
+        "avatarx-knowledge"
+      ]
+    },
+    "status": {
+      "enum": [
+        "SUCCEEDED",
+        "FAILED",
+        "PARTIAL",
+        "CANCELLED",
+        "TIMED_OUT"
+      ]
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "result": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "retryable"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 1
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1
+          },
+          "retryable": {
+            "type": "boolean"
+          },
+          "details": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "usage": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "metadata": {
+      "type": "object"
+    }
+  }
+}

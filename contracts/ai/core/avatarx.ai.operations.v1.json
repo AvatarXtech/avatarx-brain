@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "owner": "avatarx-foundation",
+  "operationFormat": "<namespace>.<operation>",
+  "namespaces": [
+    {
+      "namespace": "brain",
+      "service": "avatarx-brain",
+      "operations": [
+        "reason",
+        "plan",
+        "decide",
+        "orchestrate"
+      ]
+    },
+    {
+      "namespace": "intelligence",
+      "service": "avatarx-intelligence",
+      "operations": [
+        "route",
+        "classify",
+        "rank",
+        "evaluate",
+        "infer"
+      ]
+    },
+    {
+      "namespace": "neuron",
+      "service": "avatarx-neuron",
+      "operations": [
+        "execute",
+        "infer",
+        "job.submit",
+        "job.status"
+      ]
+    },
+    {
+      "namespace": "agents",
+      "service": "avatarx-agents",
+      "operations": [
+        "execute",
+        "delegate",
+        "review",
+        "tool.invoke"
+      ]
+    },
+    {
+      "namespace": "memory",
+      "service": "avatarx-memory",
+      "operations": [
+        "read",
+        "write",
+        "delete",
+        "context"
+      ]
+    },
+    {
+      "namespace": "knowledge",
+      "service": "avatarx-knowledge",
+      "operations": [
+        "retrieve",
+        "lookup",
+        "evidence",
+        "taxonomy.resolve"
+      ]
+    }
+  ],
+  "rules": {
+    "targetMustOwnNamespace": true,
+    "unknownNamespaceRejected": true,
+    "unknownOperationRejected": true,
+    "crossServiceOperationExecution": false
+  }
+}

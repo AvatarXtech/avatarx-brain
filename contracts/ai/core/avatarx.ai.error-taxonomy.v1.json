@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "owner": "avatarx-foundation",
+  "errors": [
+    {
+      "code": "VALIDATION_ERROR",
+      "retryable": false
+    },
+    {
+      "code": "AUTHENTICATION_ERROR",
+      "retryable": false
+    },
+    {
+      "code": "AUTHORIZATION_ERROR",
+      "retryable": false
+    },
+    {
+      "code": "DEPENDENCY_ERROR",
+      "retryable": true
+    },
+    {
+      "code": "MODEL_ERROR",
+      "retryable": true
+    },
+    {
+      "code": "RATE_LIMIT",
+      "retryable": true
+    },
+    {
+      "code": "TIMEOUT",
+      "retryable": true
+    },
+    {
+      "code": "RETRIEVAL_ERROR",
+      "retryable": true
+    },
+    {
+      "code": "TOOL_ERROR",
+      "retryable": true
+    },
+    {
+      "code": "WORKFLOW_ERROR",
+      "retryable": false
+    },
+    {
+      "code": "CANCELLED",
+      "retryable": false
+    },
+    {
+      "code": "INTERNAL_ERROR",
+      "retryable": false
+    }
+  ]
+}

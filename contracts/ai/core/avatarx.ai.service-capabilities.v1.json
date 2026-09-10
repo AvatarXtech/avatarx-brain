@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "owner": "avatarx-foundation",
+  "services": [
+    {
+      "service": "avatarx-brain",
+      "owns": [
+        "reasoning",
+        "planning",
+        "decision",
+        "workflow-orchestration"
+      ],
+      "mayInvoke": [
+        "avatarx-intelligence",
+        "avatarx-agents",
+        "avatarx-memory",
+        "avatarx-knowledge"
+      ]
+    },
+    {
+      "service": "avatarx-intelligence",
+      "owns": [
+        "model-routing",
+        "capability-selection",
+        "classification",
+        "ranking",
+        "evaluation",
+        "structured-inference"
+      ],
+      "mayInvoke": [
+        "avatarx-neuron"
+      ]
+    },
+    {
+      "service": "avatarx-neuron",
+      "owns": [
+        "provider-execution",
+        "inference-runtime",
+        "async-job-execution",
+        "provider-resilience",
+        "provider-cost-accounting"
+      ],
+      "mayInvoke": []
+    },
+    {
+      "service": "avatarx-agents",
+      "owns": [
+        "agent-execution",
+        "tool-policy",
+        "delegation",
+        "approval-gates",
+        "planner-executor-reviewer"
+      ],
+      "mayInvoke": [
+        "avatarx-neuron",
+        "avatarx-memory",
+        "avatarx-knowledge"
+      ]
+    },
+    {
+      "service": "avatarx-memory",
+      "owns": [
+        "episodic-memory",
+        "session-memory",
+        "personalization-memory",
+        "memory-governance",
+        "memory-retention"
+      ],
+      "mayInvoke": []
+    },
+    {
+      "service": "avatarx-knowledge",
+      "owns": [
+        "knowledge-retrieval",
+        "taxonomy",
+        "provenance",
+        "evidence",
+        "knowledge-policy"
+      ],
+      "mayInvoke": []
+    }
+  ],
+  "externalIntegrationOwners": [
+    {
+      "service": "avatarx-ai-director",
+      "ownership": "engineer-1",
+      "role": "workflow-direction"
+    },
+    {
+      "service": "avatarx-ai-continuity",
+      "ownership": "engineer-1",
+      "role": "continuity-evaluation"
+    },
+    {
+      "service": "avatarx-cloud",
+      "ownership": "engineer-4",
+      "role": "runtime-infrastructure"
+    }
+  ],
+  "rules": {
+    "crossServiceDatabaseAccess": false,
+    "sharedServiceCredentials": false,
+    "providerExecutionOwner": "avatarx-neuron",
+    "modelRoutingOwner": "avatarx-intelligence",
+    "reasoningOwner": "avatarx-brain",
+    "agentExecutionOwner": "avatarx-agents",
+    "memoryOwner": "avatarx-memory",
+    "knowledgeOwner": "avatarx-knowledge"
+  }
+}
