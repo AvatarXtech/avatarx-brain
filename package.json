@@ -9,6 +9,7 @@
                     "validate:production":  "node scripts/validate-production.mjs",
                     "backup:state":  "node scripts/backup-state.mjs",
                     "start:movie-runtime":  "node scripts/movie-pipeline-server.mjs",
-                    "start:brain-core":  "node scripts/brain-core-server.mjs"
+                    "start:brain-core":  "node scripts/brain-core-server.mjs",
+                    "start:brain-orchestration":  "node scripts/brain-orchestration-server.mjs"
                 }
 }
