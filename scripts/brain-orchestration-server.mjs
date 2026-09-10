@@ -7,8 +7,8 @@ import {
 } from "node:crypto";
 
 import {
-  createBrainOrchestrationEndpoint
-} from "./brain-orchestration-runtime.mjs";
+  createManagedBrainEndpoint
+} from "./brain-managed-orchestration-runtime.mjs";
 
 const env =
   process.env;
@@ -200,7 +200,7 @@ function verifyServiceAuth(
 }
 
 const orchestration =
-  createBrainOrchestrationEndpoint({
+  createManagedBrainEndpoint({
     env
   });
 
