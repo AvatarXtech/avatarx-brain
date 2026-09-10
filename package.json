@@ -10,6 +10,7 @@
                     "backup:state":  "node scripts/backup-state.mjs",
                     "start:movie-runtime":  "node scripts/movie-pipeline-server.mjs",
                     "start:brain-core":  "node scripts/brain-core-server.mjs",
-                    "start:brain-orchestration":  "node scripts/brain-orchestration-server.mjs"
+                    "start:brain-orchestration":  "node scripts/brain-orchestration-server.mjs",
+                    "validate:brain-phase2":  "node -e \"import(\u0027./scripts/validate-brain-phase2-production.mjs\u0027).then(m=\u003econsole.log(JSON.stringify(m.validateBrainPhase2Production(),null,2)))\""
                 }
 }
