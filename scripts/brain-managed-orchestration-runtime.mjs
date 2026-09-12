@@ -1,3 +1,6 @@
+import { createEscalationAuthority } from "../src/escalation-authority.js";
+import { createBrainOperationalReadiness } from "../src/operational-readiness.js";
+
 import {
   randomUUID
 } from "node:crypto";
@@ -1404,7 +1407,13 @@ export class ManagedBrainOrchestrationRuntime {
       DEFAULT_LEASE_TTL_MS,
 
     staleRunMs =
-      DEFAULT_STALE_RUN_MS
+      DEFAULT_STALE_RUN_MS,
+
+    escalationAuthority =
+      createEscalationAuthority(),
+
+    operationalReadinessAuthority =
+      createBrainOperationalReadiness()
   }) {
     if (!coreRuntime) {
       throw new Error(
@@ -1452,6 +1461,11 @@ export class ManagedBrainOrchestrationRuntime {
         "staleRunMs must be >= leaseTtlMs"
       );
     }
+
+        this.escalationAuthority = escalationAuthority;
+
+    this.operationalReadinessAuthority =
+      operationalReadinessAuthority;
 
     this.coreRuntime =
       coreRuntime;
@@ -1647,6 +1661,27 @@ export class ManagedBrainOrchestrationRuntime {
     };
   }
 
+  evaluateEscalation({
+    tenantId,
+    workflowId,
+    workflow = null,
+    reasonCode,
+    reliabilityState = null,
+    retryCount = 0,
+    approvalRequired = false
+  }) {
+    return this.escalationAuthority.evaluate({
+      tenantId,
+      workflowId,
+      sourceService: "avatarx-brain",
+      reasonCode,
+      reliabilityState,
+      retryCount,
+      approvalRequired:
+        approvalRequired === true ||
+        workflow?.approvalRequired === true
+    });
+  }
   async execute(
     input,
     authenticatedTenant,
@@ -1685,6 +1720,62 @@ export class ManagedBrainOrchestrationRuntime {
             (checkpoint) =>
               checkpoint.outcomeEnvelope
           )
+      };
+    }
+
+    const bp5Escalation =
+      this.evaluateEscalation({
+        tenantId:
+          workflow.tenantId,
+
+        workflowId:
+          workflow.workflowId,
+
+        workflow,
+
+        reasonCode:
+          "BP5_WORKFLOW_ESCALATION",
+
+        reliabilityState:
+          workflow.executionState ===
+            "RECOVERY_REQUIRED"
+            ? "RECOVERY_REQUIRED"
+            : null,
+
+        retryCount:
+          Number(
+            workflow.retryCount ??
+            0
+          ),
+
+        approvalRequired:
+          input?.approvalRequired ===
+            true
+      });
+
+    if (
+      bp5Escalation.requiresHuman ===
+      true
+    ) {
+      return {
+        duplicate: false,
+        resumed: false,
+
+        escalation:
+          bp5Escalation,
+
+        result: {
+          status:
+            "WAITING_APPROVAL",
+
+          tenantId:
+            workflow.tenantId,
+
+          workflowId:
+            workflow.workflowId
+        },
+
+        lineage: []
       };
     }
 
@@ -1753,6 +1844,52 @@ export class ManagedBrainOrchestrationRuntime {
       );
     }
 
+    const recoveryEscalation =
+      this.evaluateEscalation({
+        tenantId,
+        workflowId,
+        workflow,
+
+        reasonCode:
+          "BP5_RECOVERY_ESCALATION",
+
+        reliabilityState:
+          "RECOVERY_REQUIRED",
+
+        retryCount:
+          Number(
+            workflow.retryCount ??
+            0
+          ),
+
+        approvalRequired:
+          workflow.approvalRequired ===
+            true
+      });
+
+    if (
+      recoveryEscalation.requiresHuman ===
+      true
+    ) {
+      return {
+        duplicate: false,
+        resumed: true,
+
+        escalation:
+          recoveryEscalation,
+
+        result: {
+          status:
+            "WAITING_APPROVAL",
+
+          tenantId,
+          workflowId
+        },
+
+        lineage: []
+      };
+    }
+
     return this.runWorkflow(
       workflow,
       {
@@ -1760,7 +1897,6 @@ export class ManagedBrainOrchestrationRuntime {
       }
     );
   }
-
   async runWorkflow(
     workflow,
     {
@@ -2318,21 +2454,87 @@ export class ManagedBrainOrchestrationRuntime {
   }
 
   async ready() {
-    await this.workflowStore
-      .ready();
+    let workflowStoreReady =
+      false;
 
-    await this.orchestrationStore
-      .ready();
+    let orchestrationStoreReady =
+      false;
+
+    let recoveryHealthy =
+      true;
+
+    try {
+      await this.workflowStore
+        .ready();
+
+      workflowStoreReady =
+        true;
+    } catch {
+      workflowStoreReady =
+        false;
+    }
+
+    try {
+      await this.orchestrationStore
+        .ready();
+
+      orchestrationStoreReady =
+        true;
+    } catch {
+      orchestrationStoreReady =
+        false;
+    }
 
     if (
       typeof this.coreRuntime
         .ready === "function"
     ) {
-      await this.coreRuntime
-        .ready();
+      try {
+        await this.coreRuntime
+          .ready();
+      } catch {
+        recoveryHealthy =
+          false;
+      }
     }
 
-    return true;
+    const readiness =
+      this.operationalReadinessAuthority
+        .evaluate({
+          workflowStoreReady,
+          orchestrationStoreReady,
+
+          escalationAuthorityReady:
+            Boolean(
+              this.escalationAuthority &&
+              typeof this.escalationAuthority
+                .evaluate === "function"
+            ),
+
+          recoveryHealthy
+        });
+
+    if (
+      readiness.ready !==
+      true
+    ) {
+      const error =
+        new Error(
+          readiness.reasonCode ??
+            "BRAIN_OPERATIONAL_READINESS_FAILED"
+        );
+
+      error.code =
+        readiness.reasonCode ??
+        "BRAIN_OPERATIONAL_READINESS_FAILED";
+
+      error.readiness =
+        readiness;
+
+      throw error;
+    }
+
+    return readiness;
   }
 }
 
