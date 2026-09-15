@@ -1,0 +1,78 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://avatarx.ai/contracts/brain/generation/repair-plan.v1.schema.json",
+  "title": "AvatarX Frame Region Repair Plan V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "repairPlanId",
+    "shotId",
+    "sourceArtifactId",
+    "operations"
+  ],
+  "properties": {
+    "repairPlanId": { "type": "string" },
+    "shotId": { "type": "string" },
+    "sourceArtifactId": { "type": "string" },
+    "operations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "operationId",
+          "repairType",
+          "startFrame",
+          "endFrame"
+        ],
+        "properties": {
+          "operationId": { "type": "string" },
+          "repairType": {
+            "type": "string",
+            "enum": [
+              "FACE_REPAIR",
+              "HAND_REPAIR",
+              "BODY_REPAIR",
+              "WARDROBE_REPAIR",
+              "PROP_REPAIR",
+              "BACKGROUND_REPAIR",
+              "OBJECT_REPLACE",
+              "INPAINT",
+              "OUTPAINT",
+              "RELIGHT",
+              "FLICKER_REPAIR",
+              "TEMPORAL_REPAIR",
+              "MOTION_REPAIR",
+              "GEOMETRY_REPAIR",
+              "INTERPOLATE",
+              "SUPER_RESOLUTION",
+              "RESTORE"
+            ]
+          },
+          "startFrame": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "endFrame": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "region": {
+            "type": ["object", "null"],
+            "additionalProperties": true
+          },
+          "preserveOutsideRegion": {
+            "type": "boolean",
+            "default": true
+          },
+          "referenceArtifactIds": {
+            "type": "array",
+            "items": { "type": "string" },
+            "uniqueItems": true
+          }
+        }
+      }
+    }
+  }
+}
