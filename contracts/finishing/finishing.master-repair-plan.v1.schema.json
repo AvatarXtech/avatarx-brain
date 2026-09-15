@@ -1,0 +1,42 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://avatarx.ai/contracts/brain/finishing/master-repair-plan.v1.schema.json",
+  "title": "AvatarX Final Picture Repair Plan V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "repairPlanId",
+    "artifactId",
+    "operations"
+  ],
+  "properties": {
+    "repairPlanId": { "type": "string" },
+    "artifactId": { "type": "string" },
+    "operations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "RECUT",
+          "RECOMPOSITE",
+          "REROTO",
+          "REKEY",
+          "RETRACK",
+          "REPAINT",
+          "REGRAIN",
+          "DENOISE",
+          "DEBAND",
+          "DEFLICKER",
+          "SHOT_MATCH",
+          "REGRADE",
+          "HDR_RETRIM",
+          "SDR_RETRIM",
+          "RENDER_AGAIN"
+        ]
+      }
+    },
+    "humanReviewRequired": {
+      "type": "boolean"
+    }
+  }
+}
