@@ -1,0 +1,42 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://avatarx.ai/contracts/brain/sound/failure-diagnosis.v1.schema.json",
+  "title": "AvatarX Audio Failure Diagnosis V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "diagnosisId",
+    "sceneId",
+    "issues",
+    "recommendedAction"
+  ],
+  "properties": {
+    "diagnosisId": {
+      "type": "string"
+    },
+    "sceneId": {
+      "type": "string"
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "recommendedAction": {
+      "type": "string",
+      "enum": [
+        "ACCEPT",
+        "REGENERATE_DIALOGUE",
+        "RECORD_ADR",
+        "REGENERATE_FOLEY",
+        "REGENERATE_AMBIENCE",
+        "REGENERATE_MUSIC",
+        "REMIX",
+        "RESTORE",
+        "ESCALATE_HUMAN"
+      ]
+    }
+  }
+}
