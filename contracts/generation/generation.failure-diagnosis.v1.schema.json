@@ -1,0 +1,47 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://avatarx.ai/contracts/brain/generation/failure-diagnosis.v1.schema.json",
+  "title": "AvatarX Generation Failure Diagnosis V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "diagnosisId",
+    "shotId",
+    "failures",
+    "recommendedAction"
+  ],
+  "properties": {
+    "diagnosisId": {
+      "type": "string"
+    },
+    "shotId": {
+      "type": "string"
+    },
+    "failures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "recommendedAction": {
+      "type": "string",
+      "enum": [
+        "ACCEPT",
+        "LOCAL_REPAIR",
+        "REGENERATE_REGION",
+        "REGENERATE_TEMPORAL_RANGE",
+        "REGENERATE_SHOT",
+        "ESCALATE_HUMAN"
+      ]
+    },
+    "reasoningSummary": {
+      "type": ["string", "null"]
+    },
+    "repairPriority": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  }
+}
