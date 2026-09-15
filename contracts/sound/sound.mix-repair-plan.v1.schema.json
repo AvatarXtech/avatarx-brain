@@ -1,0 +1,46 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://avatarx.ai/contracts/brain/sound/mix-repair-plan.v1.schema.json",
+  "title": "AvatarX Mix Repair Plan V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "repairPlanId",
+    "artifactId",
+    "operations"
+  ],
+  "properties": {
+    "repairPlanId": {
+      "type": "string"
+    },
+    "artifactId": {
+      "type": "string"
+    },
+    "operations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "DIALOGUE_REBALANCE",
+          "MUSIC_REBALANCE",
+          "FX_REBALANCE",
+          "NOISE_REDUCTION",
+          "DE_CLICK",
+          "DE_CLIP",
+          "EQ",
+          "DE_ESS",
+          "COMPRESS",
+          "LIMIT",
+          "PHASE_REPAIR",
+          "SPATIAL_REMAP",
+          "LOUDNESS_CORRECT",
+          "TRUE_PEAK_CORRECT",
+          "REMIX"
+        ]
+      }
+    },
+    "humanReviewRequired": {
+      "type": "boolean"
+    }
+  }
+}
